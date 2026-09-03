@@ -1,7 +1,7 @@
-import freenect
 import sys
 import termios
 import tty
+import freenect
 
 class CalibradorMotor:
     """Clase para calibrar el ángulo de la Kinect mediante la terminal."""
@@ -63,5 +63,5 @@ class CalibradorMotor:
                 sys.stdout.write(f"\rÁngulo: {self.angulo_actual}°   ")
                 sys.stdout.flush()
 
-        # Liberamos el dispositivo para que OpenCV pueda usarlo
+        # Liberamos el dispositivo para que OpenCV pueda usarlo después
         freenect.close_device(dev)
