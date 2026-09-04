@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kinect 360</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="contenedor-principal">
+        <!-- Panel lateral de controles -->
+        <aside class="panel-lateral">
+            <div class="panel-encabezado">
+                <div class="indicador-en-linea"></div>
+                <h2>Kinect 360</h2>
+            </div>
+            <p class="panel-descripcion">Control y visualización en tiempo real</p>
+
+            <!-- Apartado 1: Selección de Cámara -->
+            <section class="seccion-control">
+                <h3 class="seccion-titulo">Cámara</h3>
+                <div class="grupo-opciones">
+                    <label class="opcion-control">
+                        <input type="radio" name="camara" value="rgb" {% if estado.camara == 'rgb' %}checked{% endif %}>
+                        <span class="control-etiqueta">
+                            <strong>Cámara RGB</strong>
+                            <small>Color natural (video)</small>
+                        </span>
+                    </label>
+                    <label class="opcion-control">
+                        <input type="radio" name="camara" value="sensor" {% if estado.camara == 'sensor' %}checked{% endif %}>
+                        <span class="control-etiqueta">
+                            <strong>Sensor de Profundidad</strong>
+                            <small>Escala de grises (Cercano claro / Lejano oscuro)</small>
+                        </span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Apartado 2: Selección de Sobreposición -->
+            <section class="seccion-control">
+                <h3 class="seccion-titulo">Sobreponer</h3>
+                <div class="grupo-opciones">
+                    <label class="opcion-control">
+                        <input type="radio" name="sobreposicion" value="ninguno" {% if estado.sobreposicion == 'ninguno' %}checked{% endif %}>
+                        <span class="control-etiqueta">
+                            <strong>Ninguno</strong>
+                            <small>Solo imagen de cámara</small>
+                        </span>
+                    </label>
+                    <label class="opcion-control">
+                        <input type="radio" name="sobreposicion" value="esqueleto" {% if estado.sobreposicion == 'esqueleto' %}checked{% endif %}>
+                        <span class="control-etiqueta">
+                            <strong>Esqueleto</strong>
+                            <small>Cuerpo completo y manos</small>
+                        </span>
+                    </label>
+                    <label class="opcion-control">
+                        <input type="radio" name="sobreposicion" value="rostro" {% if estado.sobreposicion == 'rostro' %}checked{% endif %}>
+                        <span class="control-etiqueta">
+                            <strong>Rostro</strong>
+                            <small>Malla facial detallada</small>
+                        </span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Apartado: Modo Fondo Negro -->
+            <section class="seccion-control">
+                <h3 class="seccion-titulo">Fondo</h3>
+                <label class="opcion-control opcion-checkbox {% if estado.sobreposicion == 'ninguno' %}bloqueado{% endif %}" id="contenedorFondoNegro">
+                    <input type="checkbox" id="checkFondoNegro" {% if estado.fondo_negro and estado.sobreposicion != 'ninguno' %}checked{% endif %} {% if estado.sobreposicion == 'ninguno' %}disabled{% endif %}>
+                    <span class="control-etiqueta">
+                        <strong>Fondo Negro</strong>
+                        <small>Aislar tracking sobre lienzo oscuro</small>
+                    </span>
+                </label>
+            </section>
+
+            <!-- Apartado: Control del Motor de la Kinect -->
+            <section class="seccion-control">
+                <div class="seccion-cabecera-tilt">
+                    <h3 class="seccion-titulo">Motor Kinect</h3>
+                    <span class="valor-tilt" id="lblAnguloActual">{{ estado.angulo_motor }}°</span>
+                </div>
+                
+                <div class="control-slider-tilt">
+                    <span class="limite-tilt">-30°</span>
+                    <input type="range" id="sliderTilt" min="-30" max="30" step="1" value="{{ estado.angulo_motor }}">
+                    <span class="limite-tilt">+30°</span>
+                </div>
+
+                <div class="botones-tilt">
+                    <button type="button" class="btn-tilt" id="btnTiltBajar" title="Bajar cámara (-5°)">▼ Bajar</button>
+                    <button type="button" class="btn-tilt btn-tilt-centrar" id="btnTiltCentrar" title="Centrar cámara (0°)">• Centrar</button>
+                    <button type="button" class="btn-tilt" id="btnTiltSubir" title="Subir cámara (+5°)">▲ Subir</button>
+                </div>
+            </section>
+
+            <!-- Apartado: Zoom de Imagen -->
+            <section class="seccion-control">
+                <div class="seccion-cabecera-tilt">
+                    <h3 class="seccion-titulo">Zoom Imagen</h3>
+                    <span class="valor-tilt" id="lblZoomActual">1.0x</span>
+                </div>
+
+                <div class="control-slider-tilt">
+                    <span class="limite-tilt">1x</span>
+                    <input type="range" id="sliderZoom" min="1.0" max="3.5" step="0.1" value="1.0">
+                    <span class="limite-tilt">3.5x</span>
+                </div>
+
+                <div class="botones-tilt">
+                    <button type="button" class="btn-tilt" id="btnZoomMenos" title="Reducir zoom">- Zoom</button>
+                    <button type="button" class="btn-tilt btn-tilt-centrar" id="btnZoomReset" title="Restablecer (1.0x)">1.0x</button>
+                    <button type="button" class="btn-tilt" id="btnZoomMas" title="Aumentar zoom">+ Zoom</button>
+                </div>
+            </section>
+
+        </aside>
+
+        <!-- Visor principal de la transmisión -->
+        <main class="area-visualizacion">
+            <div class="contenedor-video">
+                <img id="streamKinect" src="/video_feed" alt="Transmisión en vivo Kinect 360" />
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

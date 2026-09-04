@@ -1,0 +1,273 @@
+/* ==========================================================================
+   Estilos para Visor Web Kinect 360 - Máxima Resolución
+   Diseño de pantalla única (Single Screen), limpio y sin efectos especiales
+   ========================================================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+html, body {
+    width: 100%;
+    height: 100vh;
+    overflow: hidden; /* Garantiza pantalla única sin barras de scroll */
+    background-color: #121214;
+    color: #e1e1e6;
+}
+
+/* Contenedor dividido en Lateral y Visor Principal */
+.contenedor-principal {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* --------------------------------------------------------------------------
+   Panel Lateral de Controles
+   -------------------------------------------------------------------------- */
+.panel-lateral {
+    width: 320px;
+    min-width: 320px;
+    height: 100vh;
+    background-color: #1a1a1e;
+    border-right: 1px solid #29292e;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+}
+
+.panel-encabezado {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.indicador-en-linea {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #04d361;
+}
+
+.panel-encabezado h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.5px;
+}
+
+.panel-descripcion {
+    font-size: 0.75rem;
+    color: #a8a8b3;
+    margin-top: -6px;
+}
+
+/* Secciones de Selección */
+.seccion-control {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.seccion-titulo {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #8257e5;
+    font-weight: 700;
+}
+
+.grupo-opciones {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+/* Botones de Selección / Radio */
+.opcion-control {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 7px 10px;
+    background-color: #202024;
+    border: 1px solid #29292e;
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.opcion-control:hover {
+    background-color: #29292e;
+    border-color: #3e3e44;
+}
+
+.opcion-control input[type="radio"],
+.opcion-control input[type="checkbox"] {
+    margin-top: 2px;
+    accent-color: #8257e5;
+    cursor: pointer;
+}
+
+.control-etiqueta {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.control-etiqueta strong {
+    font-size: 0.82rem;
+    color: #e1e1e6;
+    font-weight: 600;
+}
+
+.control-etiqueta small {
+    font-size: 0.7rem;
+    color: #8d8d99;
+}
+
+.opcion-control:has(input:checked) {
+    border-color: #8257e5;
+    background-color: #262238;
+}
+
+.opcion-control:has(input:checked) .control-etiqueta strong {
+    color: #ffffff;
+}
+
+/* Opciones Bloqueadas / Deshabilitadas */
+.opcion-control.bloqueado,
+.opcion-control:has(input:disabled) {
+    opacity: 0.38;
+    cursor: not-allowed !important;
+    pointer-events: none;
+    border-color: #29292e !important;
+    background-color: #18181b !important;
+}
+
+.opcion-control.bloqueado input,
+.opcion-control input:disabled {
+    cursor: not-allowed !important;
+}
+
+/* Control de Inclinación del Motor */
+.seccion-cabecera-tilt {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.valor-tilt {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #04d361;
+    background-color: #202024;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid #29292e;
+}
+
+.control-slider-tilt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.limite-tilt {
+    font-size: 0.68rem;
+    color: #8d8d99;
+    min-width: 24px;
+}
+
+.control-slider-tilt input[type="range"] {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: #29292e;
+    accent-color: #8257e5;
+    cursor: pointer;
+}
+
+.botones-tilt {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+}
+
+.btn-tilt {
+    background-color: #202024;
+    color: #e1e1e6;
+    border: 1px solid #29292e;
+    border-radius: 6px;
+    padding: 6px 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    user-select: none;
+}
+
+.btn-tilt:hover {
+    background-color: #29292e;
+    border-color: #8257e5;
+    color: #ffffff;
+}
+
+.btn-tilt:active {
+    background-color: #382b5c;
+    border-color: #8257e5;
+}
+
+/* --------------------------------------------------------------------------
+   Área Principal de Visualización
+   -------------------------------------------------------------------------- */
+.area-visualizacion {
+    flex: 1;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background-color: #0f0f12;
+}
+
+.contenedor-video {
+    width: 100%;
+    height: 100%;
+    max-width: calc((100vh - 32px) * 1.25); /* Proporción 1280x1024 (1.25) */
+    max-height: calc(100vh - 32px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #000000;
+    border: 1px solid #29292e;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+.contenedor-video img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    image-rendering: auto;
+    transform-origin: center center;
+    transition: transform 0.08s ease-out;
+    user-select: none;
+    -webkit-user-drag: none;
+    cursor: default;
+}
+
+.contenedor-video.modo-zoom img {
+    cursor: grab;
+}
+
+.contenedor-video.modo-arrastre img {
+    cursor: grabbing;
+    transition: none !important;
+}

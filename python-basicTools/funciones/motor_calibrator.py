@@ -65,3 +65,24 @@ class CalibradorMotor:
 
         # Liberamos el dispositivo para que OpenCV pueda usarlo después
         freenect.close_device(dev)
+
+import ctypes
+
+try:
+    _libsync = ctypes.CDLL("libfreenect_sync.so")
+except Exception:
+    _libsync = None
+
+def set_motor_tilt(angulo, index=0):
+    """
+    Ajusta la inclinación del motor de la Kinect 360 (-30° a +30°).
+    Compatible con streams activos de video y profundidad.
+    """
+    angulo_clamped = max(-30, min(30, int(round(float(angulo)))))
+    if _libsync is not None:
+        try:
+            ret = _libsync.freenect_sync_set_tilt_degs(int(angulo_clamped), int(index))
+            return ret == 0, angulo_clamped
+        except Exception as e:
+            print(f"Error al mover motor de Kinect: {e}")
+    return False, angulo_clamped
