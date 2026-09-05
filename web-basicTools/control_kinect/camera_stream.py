@@ -33,19 +33,32 @@ class GestorFlujoVideo:
         
         # Estados actuales (Por defecto en MÁXIMA RESOLUCIÓN)
         self.tipo_camara = "rgb"           # 'rgb' | 'sensor'
-        self.tipo_sobreposicion = "ninguno" # 'ninguno' | 'esqueleto' | 'rostro'
+        self.tipo_sobreposicion = "ninguno" # 'ninguno' | 'esqueleto' | 'manos' | 'rostro'
         self.fondo_negro = False
         self.alta_resolucion = True        # True = 1280x1024
+
+        # Fotograma más reciente para captura de fotos de alta velocidad
+        self._lock_foto = Lock()
+        self._ultimo_fotograma = None
 
     def actualizar_configuracion(self, camara=None, sobreposicion=None, fondo_negro=None, alta_resolucion=None):
         """Actualiza las opciones de visualización de forma segura entre hilos."""
         with self._lock:
             if camara in ("rgb", "sensor"):
                 self.tipo_camara = camara
-            if sobreposicion in ("ninguno", "esqueleto", "rostro"):
-                self.tipo_sobreposicion = sobreposicion
-            if isinstance(fondo_negro, bool):
-                self.fondo_negro = fondo_negro
+                if camara == "sensor":
+                    self.tipo_sobreposicion = "ninguno"
+                    self.fondo_negro = False
+
+            if self.tipo_camara == "rgb":
+                if sobreposicion in ("ninguno", "esqueleto", "manos", "rostro"):
+                    self.tipo_sobreposicion = sobreposicion
+                if isinstance(fondo_negro, bool):
+                    self.fondo_negro = fondo_negro
+            else:
+                self.tipo_sobreposicion = "ninguno"
+                self.fondo_negro = False
+
             if isinstance(alta_resolucion, bool):
                 self.alta_resolucion = alta_resolucion
 
@@ -83,6 +96,11 @@ class GestorFlujoVideo:
                 alta_resolucion=alta_res
             )
 
+            # Actualizar fotograma más reciente en caché
+            if frame is not None:
+                with self._lock_foto:
+                    self._ultimo_fotograma = frame.copy()
+
             # Codificar a JPEG con máxima calidad visual
             exito, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 90])
             if not exito:
@@ -104,3 +122,31 @@ class GestorFlujoVideo:
             target_fps = 15.0 if alta_res else 30.0
             tiempo_espera = max(0.005, (1.0 / target_fps) - duracion)
             time.sleep(tiempo_espera)
+
+    def obtener_fotograma_actual(self, forzar_nuevo=False):
+        """
+        Retorna el fotograma actual según la cámara y opciones seleccionadas.
+        Si la transmisión en vivo está activa, entrega una copia instantánea del último cuadro.
+        """
+        with self._lock_foto:
+            if not forzar_nuevo and self._ultimo_fotograma is not None:
+                return self._ultimo_fotograma.copy()
+
+        with self._lock:
+            cam = self.tipo_camara
+            sob = self.tipo_sobreposicion
+            fn = self.fondo_negro
+            alta_res = self.alta_resolucion
+
+        frame = self.procesador.procesar_fotograma(
+            tipo_camara=cam,
+            tipo_sobreposicion=sob,
+            fondo_negro=fn,
+            alta_resolucion=alta_res
+        )
+
+        if frame is not None:
+            with self._lock_foto:
+                self._ultimo_fotograma = frame.copy()
+
+        return frame

@@ -3,6 +3,7 @@ from funciones.motor_calibrator import CalibradorMotor
 from funciones.rgb_camera import get_rgb_frame
 from funciones.depth_camera import get_depth_frame
 from funciones.skeletal_capture import get_skeletal_data
+from funciones.hand_capture import get_hand_data
 from funciones.face_capture import get_face_data
 
 def main():
@@ -24,6 +25,7 @@ def main():
             rgb_image = get_rgb_frame()
             depth_image = get_depth_frame()
             skeleton_image = get_skeletal_data()
+            hand_image = get_hand_data()
             face_image = get_face_data()
             
             # Mostrar ventanas
@@ -34,10 +36,13 @@ def main():
                 cv2.imshow("2. Kinect Profundidad", depth_image)
                 
             if skeleton_image is not None:
-                cv2.imshow("3. Kinect Esqueleto y Manos", skeleton_image)
+                cv2.imshow("3. Kinect Esqueleto", skeleton_image)
                 
+            if hand_image is not None:
+                cv2.imshow("4. Kinect Manos", hand_image)
+
             if face_image is not None:
-                cv2.imshow("4. Kinect Rostro", face_image)
+                cv2.imshow("5. Kinect Rostro", face_image)
                 
             # 3. Control de salida (con tecla 'q')
             if cv2.waitKey(1) & 0xFF == ord('q'):

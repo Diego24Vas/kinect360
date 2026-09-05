@@ -1,20 +1,28 @@
 import cv2
 import numpy as np
 import mediapipe as mp
+from mediapipe.framework.formats import landmark_pb2
 from funciones.rgb_camera import get_rgb_frame 
 
-# Inicializar Holistic (cuerpo + manos)
-mp_holistic = mp.solutions.holistic
-holistic = mp_holistic.Holistic(
+# Inicializar Pose (esqueleto corporal)
+mp_pose = mp.solutions.pose
+pose = mp_pose.Pose(
     static_image_mode=False, 
     min_detection_confidence=0.5, 
     min_tracking_confidence=0.5
 )
 mp_drawing = mp.solutions.drawing_utils
 
+# Conexiones exclusivas del cuerpo (sin manos/dedos: 17, 18, 19, 20, 21, 22)
+CONEXIONES_CUERPO = frozenset([
+    c for c in mp_pose.POSE_CONNECTIONS 
+    if not any(punto in (17, 18, 19, 20, 21, 22) for punto in c)
+])
+
 def get_skeletal_data():
     """
-    Obtiene los datos del cuerpo y dibuja el esqueleto sobre un fondo negro.
+    Obtiene los datos del cuerpo y dibuja el esqueleto corporal sobre un fondo negro,
+    terminando limpiamente en las muñecas para no superponerse con la malla de manos.
     """
     frame = get_rgb_frame()
     if frame is None:
@@ -26,36 +34,21 @@ def get_skeletal_data():
     
     # MediaPipe necesita la imagen para calcular dónde están las partes del cuerpo
     image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    results = holistic.process(image_rgb)
+    results = pose.process(image_rgb)
     
-    # 1. Dibujar el esqueleto en el LIENZO NEGRO
+    # Dibujar el esqueleto corporal en el LIENZO NEGRO sin puntos de dedos
     if results.pose_landmarks:
+        puntos_cuerpo = landmark_pb2.NormalizedLandmarkList()
+        puntos_cuerpo.CopyFrom(results.pose_landmarks)
+        for idx in (17, 18, 19, 20, 21, 22):
+            puntos_cuerpo.landmark[idx].visibility = 0.0
+
         mp_drawing.draw_landmarks(
-            image=lienzo_negro,  # <--- Dibujamos sobre el lienzo vacío
-            landmark_list=results.pose_landmarks, 
-            connections=mp_holistic.POSE_CONNECTIONS,
+            image=lienzo_negro,
+            landmark_list=puntos_cuerpo, 
+            connections=CONEXIONES_CUERPO,
             landmark_drawing_spec=mp_drawing.DrawingSpec(color=(0, 165, 255), thickness=3, circle_radius=4),
             connection_drawing_spec=mp_drawing.DrawingSpec(color=(255, 0, 0), thickness=2, circle_radius=2)
-        )
-        
-    # 2. Dibujar la mano izquierda en el LIENZO NEGRO
-    if results.left_hand_landmarks:
-        mp_drawing.draw_landmarks(
-            image=lienzo_negro, 
-            landmark_list=results.left_hand_landmarks, 
-            connections=mp_holistic.HAND_CONNECTIONS,
-            landmark_drawing_spec=mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=3),
-            connection_drawing_spec=mp_drawing.DrawingSpec(color=(255, 255, 255), thickness=2, circle_radius=2)
-        )
-        
-    # 3. Dibujar la mano derecha en el LIENZO NEGRO
-    if results.right_hand_landmarks:
-        mp_drawing.draw_landmarks(
-            image=lienzo_negro, 
-            landmark_list=results.right_hand_landmarks, 
-            connections=mp_holistic.HAND_CONNECTIONS,
-            landmark_drawing_spec=mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=3),
-            connection_drawing_spec=mp_drawing.DrawingSpec(color=(255, 255, 255), thickness=2, circle_radius=2)
         )
         
     return lienzo_negro

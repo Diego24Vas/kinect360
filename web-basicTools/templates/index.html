@@ -31,32 +31,39 @@
                         <input type="radio" name="camara" value="sensor" {% if estado.camara == 'sensor' %}checked{% endif %}>
                         <span class="control-etiqueta">
                             <strong>Sensor de Profundidad</strong>
-                            <small>Escala de grises (Cercano claro / Lejano oscuro)</small>
+                            <small>Colores Kinect estándar (Rojo cercano / Azul lejano)</small>
                         </span>
                     </label>
                 </div>
             </section>
 
             <!-- Apartado 2: Selección de Sobreposición -->
-            <section class="seccion-control">
+            <section class="seccion-control" id="seccionSobreponer">
                 <h3 class="seccion-titulo">Sobreponer</h3>
                 <div class="grupo-opciones">
-                    <label class="opcion-control">
-                        <input type="radio" name="sobreposicion" value="ninguno" {% if estado.sobreposicion == 'ninguno' %}checked{% endif %}>
+                    <label class="opcion-control {% if estado.camara == 'sensor' %}bloqueado{% endif %}">
+                        <input type="radio" name="sobreposicion" value="ninguno" {% if estado.sobreposicion == 'ninguno' or estado.camara == 'sensor' %}checked{% endif %} {% if estado.camara == 'sensor' %}disabled{% endif %}>
                         <span class="control-etiqueta">
                             <strong>Ninguno</strong>
                             <small>Solo imagen de cámara</small>
                         </span>
                     </label>
-                    <label class="opcion-control">
-                        <input type="radio" name="sobreposicion" value="esqueleto" {% if estado.sobreposicion == 'esqueleto' %}checked{% endif %}>
+                    <label class="opcion-control {% if estado.camara == 'sensor' %}bloqueado{% endif %}">
+                        <input type="radio" name="sobreposicion" value="esqueleto" {% if estado.sobreposicion == 'esqueleto' and estado.camara != 'sensor' %}checked{% endif %} {% if estado.camara == 'sensor' %}disabled{% endif %}>
                         <span class="control-etiqueta">
                             <strong>Esqueleto</strong>
-                            <small>Cuerpo completo y manos</small>
+                            <small>Cuerpo completo (Pose)</small>
                         </span>
                     </label>
-                    <label class="opcion-control">
-                        <input type="radio" name="sobreposicion" value="rostro" {% if estado.sobreposicion == 'rostro' %}checked{% endif %}>
+                    <label class="opcion-control {% if estado.camara == 'sensor' %}bloqueado{% endif %}">
+                        <input type="radio" name="sobreposicion" value="manos" {% if estado.sobreposicion == 'manos' and estado.camara != 'sensor' %}checked{% endif %} {% if estado.camara == 'sensor' %}disabled{% endif %}>
+                        <span class="control-etiqueta">
+                            <strong>Manos</strong>
+                            <small>Malla de manos y dedos</small>
+                        </span>
+                    </label>
+                    <label class="opcion-control {% if estado.camara == 'sensor' %}bloqueado{% endif %}">
+                        <input type="radio" name="sobreposicion" value="rostro" {% if estado.sobreposicion == 'rostro' and estado.camara != 'sensor' %}checked{% endif %} {% if estado.camara == 'sensor' %}disabled{% endif %}>
                         <span class="control-etiqueta">
                             <strong>Rostro</strong>
                             <small>Malla facial detallada</small>
@@ -66,10 +73,10 @@
             </section>
 
             <!-- Apartado: Modo Fondo Negro -->
-            <section class="seccion-control">
+            <section class="seccion-control" id="seccionFondo">
                 <h3 class="seccion-titulo">Fondo</h3>
-                <label class="opcion-control opcion-checkbox {% if estado.sobreposicion == 'ninguno' %}bloqueado{% endif %}" id="contenedorFondoNegro">
-                    <input type="checkbox" id="checkFondoNegro" {% if estado.fondo_negro and estado.sobreposicion != 'ninguno' %}checked{% endif %} {% if estado.sobreposicion == 'ninguno' %}disabled{% endif %}>
+                <label class="opcion-control opcion-checkbox {% if estado.sobreposicion == 'ninguno' or estado.camara == 'sensor' %}bloqueado{% endif %}" id="contenedorFondoNegro">
+                    <input type="checkbox" id="checkFondoNegro" {% if estado.fondo_negro and estado.sobreposicion != 'ninguno' and estado.camara != 'sensor' %}checked{% endif %} {% if estado.sobreposicion == 'ninguno' or estado.camara == 'sensor' %}disabled{% endif %}>
                     <span class="control-etiqueta">
                         <strong>Fondo Negro</strong>
                         <small>Aislar tracking sobre lienzo oscuro</small>
@@ -117,16 +124,97 @@
                 </div>
             </section>
 
+            <!-- Apartado: Captura de Fotografías -->
+            <section class="seccion-control" id="seccionFoto">
+                <h3 class="seccion-titulo">Fotografía</h3>
+                <div class="control-temporizador">
+                    <span class="subetiqueta-control">Temporizador:</span>
+                    <div class="grupo-botones-temporizador">
+                        <button type="button" class="btn-temp activo" data-segundos="0" title="Sin temporizador (Inmediato)">0s</button>
+                        <button type="button" class="btn-temp" data-segundos="2" title="Temporizador de 2 segundos">2s</button>
+                        <button type="button" class="btn-temp" data-segundos="5" title="Temporizador de 5 segundos">5s</button>
+                        <button type="button" class="btn-temp" data-segundos="10" title="Temporizador de 10 segundos">10s</button>
+                    </div>
+                </div>
+
+                <div class="grupo-accion-foto">
+                    <button type="button" class="btn-capturar-foto" id="btnCapturarFoto" title="Tomar foto según cámara y opciones seleccionadas">
+                        <span class="icono-foto">📷</span>
+                        <span id="textoBtnFoto">Sacar Foto</span>
+                    </button>
+                    <button type="button" class="btn-cancelar-foto" id="btnCancelarFoto" style="display: none;" title="Cancelar cuenta regresiva">
+                        ✕ Cancelar (<span id="segundosRestantes">0</span>s)
+                    </button>
+                    <button type="button" class="btn-ver-galeria" id="btnVerGaleria" title="Ver galería de fotos realizadas">
+                        <span class="icono-galeria">🖼️</span>
+                        <span>Ver Galería</span>
+                    </button>
+                </div>
+
+                <!-- Notificación de última captura -->
+                <div class="tarjeta-notificacion-foto" id="notificacionFoto" style="display: none;">
+                    <div class="icono-notif">✓</div>
+                    <div class="cuerpo-notif">
+                        <span class="titulo-notif">Foto capturada</span>
+                        <a id="linkFotoGuardada" href="#" target="_blank" class="enlace-foto" title="Abrir imagen">foto.jpg</a>
+                        <span class="ruta-notif">Guardada en <code>img/</code></span>
+                    </div>
+                </div>
+            </section>
+
         </aside>
 
         <!-- Visor principal de la transmisión -->
         <main class="area-visualizacion">
             <div class="contenedor-video">
                 <img id="streamKinect" src="/video_feed" alt="Transmisión en vivo Kinect 360" />
+                
+                <!-- Capa de conteo regresivo sobre el video -->
+                <div class="overlay-conteo" id="overlayConteo" style="display: none;">
+                    <div class="circulo-conteo">
+                        <span class="numero-conteo" id="numeroConteo">3</span>
+                    </div>
+                    <span class="texto-conteo-aviso">¡Sonríe! Preparando foto...</span>
+                </div>
+
+                <!-- Efecto de flash del obturador -->
+                <div class="flash-pantalla" id="flashPantalla"></div>
             </div>
         </main>
+    </div>
+
+    <!-- Modal Galería de Fotos -->
+    <div class="modal-galeria" id="modalGaleria" style="display: none;">
+        <div class="modal-fondo" id="modalFondo"></div>
+        <div class="modal-dialogo">
+            <div class="modal-cabecera">
+                <div class="modal-titulo-grupo">
+                    <span class="modal-icono">🖼️</span>
+                    <h3>Galería de Fotos</h3>
+                    <span class="badge-total-fotos" id="badgeTotalFotos">0 fotos</span>
+                </div>
+                <button type="button" class="btn-cerrar-modal" id="btnCerrarGaleria" title="Cerrar galería">✕</button>
+            </div>
+            <div class="modal-cuerpo" id="contenedorFotosGaleria">
+                <!-- Se inyecta dinámicamente con JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Lightbox Visor a pantalla completa -->
+    <div class="lightbox-visor" id="lightboxVisor" style="display: none;">
+        <div class="lightbox-fondo" id="lightboxFondo"></div>
+        <div class="lightbox-contenido">
+            <button type="button" class="btn-cerrar-lightbox" id="btnCerrarLightbox" title="Cerrar visor">✕</button>
+            <img id="imgLightbox" src="" alt="Foto ampliada" />
+            <div class="lightbox-barra">
+                <span id="nombreLightbox">foto.jpg</span>
+                <a id="btnDescargarLightbox" href="#" download class="btn-descarga-lightbox">⬇ Descargar</a>
+            </div>
+        </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
+

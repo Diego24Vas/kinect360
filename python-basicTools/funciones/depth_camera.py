@@ -2,75 +2,95 @@ import cv2
 import freenect
 import numpy as np
 
-def get_depth_frame(alta_resolucion=True, formato_registrado=True):
+def _crear_tabla_gamma_glview():
     """
-    Captura un fotograma de profundidad (3D) desde la Kinect 360 con máxima calidad.
-    Representación en escala de grises calibrada para corto y medio alcance:
-        - Máximo brillo atenuado a gris claro (~180) para evitar sobreexposición o blancos quemados.
-        - Objetos cercanos (~0.5m a 0.8m): Tonos grises medios-claros con relieve definido.
-        - Objetos lejanos (> 3.0m): Tonos grises oscuros (~20).
-        - Sombras / sin medición: Negro puro (0).
+    Genera la tabla de colores predeterminada de Kinect/libfreenect empleada en 'freenect-glview'.
+    Mapea valores de profundidad de 11 bits (0 a 2047) a un gradiente continuo:
+        - Muy cercano (< 0.7m): Blanco -> Rojo
+        - Cercano (~0.7m a 1.1m): Rojo -> Amarillo
+        - Medio (~1.1m a 1.8m): Amarillo -> Verde
+        - Medio-lejano (~1.8m a 3.2m): Verde -> Cian
+        - Lejano (~3.2m a 5.0m): Cian -> Azul
+        - Muy lejano / Sin medición (> 5.0m o valor 2047): Negro
+    """
+    lut = np.zeros((2048, 3), dtype=np.uint8)
+    t_gamma = np.empty(2048, dtype=np.uint16)
+    for i in range(2048):
+        v = i / 2048.0
+        v = (v ** 3) * 6
+        t_gamma[i] = int(v * 6 * 256)
+
+    for i in range(2048):
+        pval = int(t_gamma[i])
+        lb = pval & 0xff
+        band = pval >> 8
+        if band == 0:
+            r, g, b = 255, 255 - lb, 255 - lb
+        elif band == 1:
+            r, g, b = 255, lb, 0
+        elif band == 2:
+            r, g, b = 255 - lb, 255, 0
+        elif band == 3:
+            r, g, b = 0, 255, lb
+        elif band == 4:
+            r, g, b = 0, 255 - lb, 255
+        elif band == 5:
+            r, g, b = 0, 0, 255 - lb
+        else:
+            r, g, b = 0, 0, 0
+        # Formato BGR para OpenCV
+        lut[i] = [b, g, r]
+
+    return lut
+
+LUT_DEPTH_GLVIEW = _crear_tabla_gamma_glview()
+
+def get_depth_frame(alta_resolucion=True, formato_registrado=False):
+    """
+    Captura un fotograma de profundidad (3D) desde la Kinect 360 con la paleta
+    predeterminada de 'freenect-glview'.
     
     Parámetros:
         alta_resolucion (bool):
-            - True: Escala el mapa a 1280x1024 mediante interpolación bicúbica de alta definición.
+            - True: Escala el mapa a 1280x1024.
             - False: Conserva la resolución nativa de 640x480.
         formato_registrado (bool):
-            - True: Utiliza DEPTH_REGISTERED (calibrado en milímetros y alineado al sensor RGB).
-            - False: Utiliza DEPTH_11BIT estándar.
+            - True: Utiliza DEPTH_REGISTERED (alineado con la cámara RGB) y proyecta
+                    al rango cromático equivalente de freenect-glview.
+            - False (Predeterminado): Utiliza DEPTH_11BIT nativo directo (idéntico a freenect-glview).
     """
     try:
-        # Intentar obtener profundidad calibrada/registrada
+        # Intentar obtener profundidad calibrada o 11-bit según parámetro
         if formato_registrado:
             try:
                 frame, _ = freenect.sync_get_depth(0, freenect.DEPTH_REGISTERED)
             except Exception:
-                frame, _ = freenect.sync_get_depth()
+                frame, _ = freenect.sync_get_depth(0, freenect.DEPTH_11BIT)
         else:
-            frame, _ = freenect.sync_get_depth()
+            frame, _ = freenect.sync_get_depth(0, freenect.DEPTH_11BIT)
 
         if frame is None:
             return None
 
-        # Si viene en formato calibrado/registrado (distancia en milímetros)
+        # Si viene en formato calibrado/registrado (distancia en milímetros > 2047)
         if frame.max() > 2047 or formato_registrado:
-            # Rango útil óptimo de Kinect v1: 400 mm (0.4 m) a 4000 mm (4.0 m)
             mask_valida = (frame >= 400) & (frame <= 4000)
-            depth_norm = np.zeros_like(frame, dtype=np.uint8)
-            
-            # Escala de grises calibrada:
-            # Se usa una curva de potencia (gamma 1.3) y techo en gris medio-claro (180/255)
-            # para enriquecer los relieves en distancias cortas y evitar saturar todo en blanco.
-            dist_factor = np.clip((3200.0 - frame[mask_valida]) / (3200.0 - 400.0), 0.0, 1.0)
-            dist_curva = dist_factor ** 1.3
-            depth_norm[mask_valida] = (20.0 + dist_curva * (180.0 - 20.0)).astype(np.uint8)
-
-            # Filtro mediano para limpiar ruido de moteado infrarrojo preservando bordes
-            depth_limpio = cv2.medianBlur(depth_norm, 3)
-            
-            # Formato de 3 canales (BGR en escala de grises) para compatibilidad total con stream y sobreposiciones
-            depth_gray = cv2.cvtColor(depth_limpio, cv2.COLOR_GRAY2BGR)
-            
-            # Fondos sin medición / sombras infrarrojas en negro puro
-            depth_gray[~mask_valida] = [0, 0, 0]
+            raw_indices = np.full_like(frame, 2047, dtype=np.int32)
+            z_m = frame[mask_valida].astype(np.float32) / 1000.0
+            raw_val = 2842.5 * (np.arctan(z_m / 0.1236) - 1.1863)
+            raw_indices[mask_valida] = np.clip(raw_val, 0, 2047).astype(np.int32)
+            depth_color = LUT_DEPTH_GLVIEW[raw_indices]
         else:
-            # Respaldo para formato 11-bit sin registro
-            mask_valida = (frame > 0) & (frame < 2047)
-            depth_norm = np.zeros_like(frame, dtype=np.uint8)
-            dist_factor = np.clip((950.0 - frame[mask_valida]) / (950.0 - 450.0), 0.0, 1.0)
-            dist_curva = dist_factor ** 1.3
-            depth_norm[mask_valida] = (20.0 + dist_curva * (180.0 - 20.0)).astype(np.uint8)
-            
-            depth_limpio = cv2.medianBlur(depth_norm, 3)
-            depth_gray = cv2.cvtColor(depth_limpio, cv2.COLOR_GRAY2BGR)
-            depth_gray[~mask_valida] = [0, 0, 0]
+            # Formato nativo de 11 bits (0 a 2047) idéntico a freenect-glview
+            depth_clipped = np.clip(frame, 0, 2047)
+            depth_color = LUT_DEPTH_GLVIEW[depth_clipped]
 
         # Aplicar efecto espejo para coincidir con la vista del usuario
-        depth_espejo = cv2.flip(depth_gray, 1)
+        depth_espejo = cv2.flip(depth_color, 1)
 
-        # Escalar a la resolución máxima del sistema si está habilitada
+        # Escalar a la resolución deseada
         if alta_resolucion:
-            depth_espejo = cv2.resize(depth_espejo, (1280, 1024), interpolation=cv2.INTER_CUBIC)
+            depth_espejo = cv2.resize(depth_espejo, (1280, 1024), interpolation=cv2.INTER_LINEAR)
 
         return depth_espejo
 

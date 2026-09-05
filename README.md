@@ -16,7 +16,8 @@ kinect360/
 │       ├── rgb_camera.py          # Captura RGB en resolución máxima (1280x1024)
 │       ├── depth_camera.py        # Sensor 3D calibrado en milímetros (DEPTH_REGISTERED)
 │       ├── motor_calibrator.py    # Control y calibración del motor (-30° a +30°)
-│       ├── skeletal_capture.py    # Tracking de esqueleto y manos con MediaPipe Holistic
+│       ├── skeletal_capture.py    # Tracking de esqueleto corporal (Pose) con MediaPipe
+│       ├── hand_capture.py        # Tracking de manos y dedos con MediaPipe Hands
 │       └── face_capture.py        # Tracking de malla facial con MediaPipe FaceMesh
 │
 ├── web-basicTools/                # Aplicación y servidor web reactivo
@@ -44,16 +45,15 @@ kinect360/
 - **Cámara RGB (`rgb_camera.py`)**:
   - Captura video a color utilizando la resolución nativa máxima de hardware de la Kinect (**1280 × 1024 píxeles**, SXGA) con alternativa en resolución estándar (640 × 480).
 - **Sensor de Profundidad 3D (`depth_camera.py`)**:
-  - Modo calibrado en milímetros métricos (`DEPTH_REGISTERED`) alineado con la cámara RGB.
-  - Visualización en escala de grises con contraste dinámico para distancias de oficina/interiores: atenuación de blancos quemados mediante curva gamma y tope en gris medio-claro (~180/255) para destacar relieves a corto alcance (0.5m a 1.5m), decayendo gradualmente hacia gris oscuro en objetos lejanos.
-  - Filtrado de ruido infrarrojo (`medianBlur`), eliminación de sombras a negro puro y reescalado bicúbico a **1280 × 1024**.
+  - Paleta de colores predeterminada de **`freenect-glview`** (tabla gamma estándar de libfreenect), óptima para medir distancias visualmente mediante transiciones de color continuas (blanco/rojo para distancias muy cortas, pasando por amarillo, verde, cian y azul a distancias mayores, con negro para sombras y áreas fuera de rango).
+  - Compatible con resolución estándar (640 × 480) y escalado de alta definición (1280 × 1024), con soporte tanto para formato nativo de 11 bits como registrado métrico.
 - **Control de Motor de Inclinación (`motor_calibrator.py`)**:
   - Calibrador por teclado interactivo para terminal (CLI).
   - Función `set_motor_tilt(angulo)` compatible con transmisiones de video activas simultáneamente.
-- **Biometría con MediaPipe (`skeletal_capture.py` y `face_capture.py`)**:
-  - Detección de pose corporal, manos y malla facial.
+- **Biometría con MediaPipe (`skeletal_capture.py`, `hand_capture.py` y `face_capture.py`)**:
+  - Detección independiente de pose corporal, malla de manos y dedos, y malla facial.
 - **Visualizador de Escritorio (`main.py`)**:
-  - Despliega simultáneamente las 4 ventanas de OpenCV (RGB, Profundidad, Esqueleto y Rostro).
+  - Despliega simultáneamente las 5 ventanas de OpenCV (RGB, Profundidad, Esqueleto, Manos y Rostro).
 
 ### 2. Interfaz Web (`web-basicTools/`)
 - **Pantalla Única (Single Screen)**:
@@ -62,7 +62,7 @@ kinect360/
   - Transmisión continua por HTTP (`multipart/x-mixed-replace`) a resolución máxima (1280 × 1024) y calidad JPEG al 90%.
 - **Panel Lateral de Control**:
   - **Cámara**: Alterna instantáneamente entre *Cámara RGB* y *Sensor de Profundidad 3D*.
-  - **Sobreponer**: Superpone en tiempo real sobre la cámara activa: *Ninguno*, *Esqueleto* o *Rostro*.
+  - **Sobreponer**: Superpone en tiempo real sobre la cámara activa: *Ninguno*, *Esqueleto*, *Manos* o *Rostro*.
   - **Fondo Negro Inteligente**: Permite aislar el tracking sobre lienzo oscuro; se bloquea y deshabilita automáticamente mientras *Ninguno* esté seleccionado.
   - **Inclinación del Motor**: Ajuste con barra deslizante (`-30°` a `+30°`) y botones de acción rápida (*Bajar -5°*, *Centrar 0°*, *Subir +5°*).
   - **Zoom de Imagen Interactivo**:
