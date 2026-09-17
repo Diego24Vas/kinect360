@@ -6,42 +6,43 @@ Este repositorio contiene un conjunto de herramientas y una aplicación web en P
 
 ## 📁 Estructura del Repositorio
 
-El proyecto se encuentra organizado en dos módulos principales:
+El proyecto se encuentra organizado en dos módulos principales dentro de `BasicTools/`:
 
 ```text
 kinect360/
-├── python-basicTools/             # Herramientas base de escritorio y librerías del sensor
-│   ├── main.py                    # Visualizador de escritorio con OpenCV (cv2.imshow)
-│   └── funciones/                 # Módulos de captura, calibración y procesamiento
-│       ├── rgb_camera.py          # Captura RGB en resolución máxima (1280x1024)
-│       ├── depth_camera.py        # Sensor 3D calibrado en milímetros (DEPTH_REGISTERED)
-│       ├── motor_calibrator.py    # Control y calibración del motor (-30° a +30°)
-│       ├── skeletal_capture.py    # Tracking de esqueleto corporal (Pose) con MediaPipe
-│       ├── hand_capture.py        # Tracking de manos y dedos con MediaPipe Hands
-│       └── face_capture.py        # Tracking de malla facial con MediaPipe FaceMesh
+├── BasicTools/
+│   ├── python-basicTools/             # Herramientas base de escritorio y librerías del sensor
+│   │   ├── main.py                    # Visualizador de escritorio con OpenCV (cv2.imshow)
+│   │   └── funciones/                 # Módulos de captura, calibración y procesamiento
+│   │       ├── rgb_camera.py          # Captura RGB en resolución máxima (1280x1024)
+│   │       ├── depth_camera.py        # Sensor 3D calibrado en milímetros (DEPTH_REGISTERED)
+│   │       ├── motor_calibrator.py    # Control y calibración del motor (-30° a +30°)
+│   │       ├── skeletal_capture.py    # Tracking de esqueleto corporal (Pose) con MediaPipe
+│   │       ├── hand_capture.py        # Tracking de manos y dedos con MediaPipe Hands
+│   │       └── face_capture.py        # Tracking de malla facial con MediaPipe FaceMesh
+│   │
+│   └── web-basicTools/                # Aplicación y servidor web reactivo
+│       ├── app.py                     # Servidor Flask y endpoints REST
+│       ├── control_kinect/            # Carpeta especial con funciones y controladores de la Kinect
+│       │   ├── __init__.py            # Exporta GestorFlujoVideo, ProcesadorVideo y ControladorMotor
+│       │   ├── camera_stream.py       # Gestor exclusivo de transmisión MJPEG y visualización
+│       │   ├── motor_controller.py    # Controlador independiente para el motor de inclinación
+│       │   └── video_processor.py     # Procesador de sobreposición, captura y visión artificial
+│       ├── templates/
+│       │   └── index.html             # Interfaz web de pantalla única (100vh)
+│       └── static/
+│           ├── css/style.css          # Estilos limpios, tema oscuro y diseño responsivo
+│           └── js/main.js             # Lógica cliente: zoom, motor y control reactivo
 │
-├── web-basicTools/                # Aplicación y servidor web reactivo
-│   ├── app.py                     # Servidor Flask y endpoints REST
-│   ├── control_kinect/            # Carpeta especial con funciones y controladores de la Kinect
-│   │   ├── __init__.py            # Exporta GestorFlujoVideo, ProcesadorVideo y ControladorMotor
-│   │   ├── camera_stream.py       # Gestor exclusivo de transmisión MJPEG y visualización
-│   │   ├── motor_controller.py    # Controlador independiente para el motor de inclinación
-│   │   └── video_processor.py     # Procesador de sobreposición, captura y visión artificial
-│   ├── templates/
-│   │   └── index.html             # Interfaz web de pantalla única (100vh)
-│   └── static/
-│       ├── css/style.css          # Estilos limpios, tema oscuro y diseño responsivo
-│       └── js/main.js             # Lógica cliente: zoom, motor y control reactivo
-│
-├── requirements.txt               # Dependencias del proyecto
-└── README.md                      # Documentación del repositorio
+├── requirements.txt                   # Dependencias del proyecto
+└── README.md                          # Documentación del repositorio
 ```
 
 ---
 
 ## 🛠️ Herramientas y Funcionalidades
 
-### 1. Herramientas Base (`python-basicTools/`)
+### 1. Herramientas Base (`BasicTools/python-basicTools/`)
 - **Cámara RGB (`rgb_camera.py`)**:
   - Captura video a color utilizando la resolución nativa máxima de hardware de la Kinect (**1280 × 1024 píxeles**, SXGA) con alternativa en resolución estándar (640 × 480).
 - **Sensor de Profundidad 3D (`depth_camera.py`)**:
@@ -55,7 +56,7 @@ kinect360/
 - **Visualizador de Escritorio (`main.py`)**:
   - Despliega simultáneamente las 5 ventanas de OpenCV (RGB, Profundidad, Esqueleto, Manos y Rostro).
 
-### 2. Interfaz Web (`web-basicTools/`)
+### 2. Interfaz Web (`BasicTools/web-basicTools/`)
 - **Pantalla Única (Single Screen)**:
   - Todo el contenido y controles se muestran ajustados al 100% de la ventana (`100vh`) sin necesidad de desplazamiento (scroll).
 - **Transmisión MJPEG de Alta Calidad**:
@@ -71,6 +72,10 @@ kinect360/
     - Rueda del ratón directamente sobre el video para zoom fluido.
     - Clic y arrastre para desplazar el encuadre (Pan) con el zoom activo.
     - Doble clic para alternar rápidamente entre 2.0x y 1.0x.
+- **Captura y Galería de Fotografías**:
+  - Obturación en alta resolución con temporizador configurable (0s, 2s, 5s y 10s).
+  - Guardado automático en `img/` con nombres fechados (`foto_YYYYMMDD_HHMMSS.jpg`).
+  - Modal de galería interactiva para previsualizar, eliminar y descargar imágenes con visor ampliado (Lightbox).
 
 ---
 
@@ -92,3 +97,29 @@ pip install -r requirements.txt
 ```
 
 ---
+
+## 🚀 Ejecución
+
+### Opción A: Servidor e Interfaz Web (Recomendado)
+Desde la raíz del repositorio:
+```bash
+python BasicTools/web-basicTools/app.py
+```
+O ingresando a la carpeta del módulo:
+```bash
+cd BasicTools/web-basicTools
+python app.py
+```
+Luego, accede desde tu navegador a: **`http://localhost:5000`** (o `http://127.0.0.1:5000`).
+
+### Opción B: Visualizador de Escritorio (Ventanas OpenCV)
+Desde la raíz del repositorio:
+```bash
+python BasicTools/python-basicTools/main.py
+```
+O ingresando a la carpeta del módulo:
+```bash
+cd BasicTools/python-basicTools
+python main.py
+```
+

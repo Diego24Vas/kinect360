@@ -1,7 +1,10 @@
 import cv2
 import numpy as np
 import mediapipe as mp
-from funciones.rgb_camera import get_rgb_frame
+try:
+    from funciones.rgb_camera import get_rgb_frame
+except ImportError:
+    from .rgb_camera import get_rgb_frame
 
 # Inicializar Hands (malla y seguimiento de manos con alta sensibilidad)
 mp_hands = mp.solutions.hands

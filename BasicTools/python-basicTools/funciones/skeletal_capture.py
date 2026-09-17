@@ -2,7 +2,10 @@ import cv2
 import numpy as np
 import mediapipe as mp
 from mediapipe.framework.formats import landmark_pb2
-from funciones.rgb_camera import get_rgb_frame 
+try:
+    from funciones.rgb_camera import get_rgb_frame
+except ImportError:
+    from .rgb_camera import get_rgb_frame
 
 # Inicializar Pose (esqueleto corporal)
 mp_pose = mp.solutions.pose

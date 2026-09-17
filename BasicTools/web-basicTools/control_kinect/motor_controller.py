@@ -11,10 +11,11 @@ from threading import Lock
 # Asegurar rutas de importación hacia python-basicTools
 DIR_ACTUAL = os.path.dirname(os.path.abspath(__file__))
 DIR_WEB = os.path.abspath(os.path.join(DIR_ACTUAL, ".."))
-DIRECTORIO_RAIZ = os.path.abspath(os.path.join(DIR_ACTUAL, "../.."))
-DIR_PYTHON_TOOLS = os.path.join(DIRECTORIO_RAIZ, "python-basicTools")
+DIR_BASIC_TOOLS = os.path.abspath(os.path.join(DIR_ACTUAL, "../.."))
+DIRECTORIO_RAIZ = os.path.abspath(os.path.join(DIR_BASIC_TOOLS, ".."))
+DIR_PYTHON_TOOLS = os.path.join(DIR_BASIC_TOOLS, "python-basicTools")
 
-for ruta in (DIR_ACTUAL, DIR_WEB, DIRECTORIO_RAIZ, DIR_PYTHON_TOOLS):
+for ruta in (DIR_ACTUAL, DIR_WEB, DIR_BASIC_TOOLS, DIRECTORIO_RAIZ, DIR_PYTHON_TOOLS):
     if ruta not in sys.path:
         sys.path.insert(0, ruta)
 

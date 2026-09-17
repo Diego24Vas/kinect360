@@ -1,10 +1,31 @@
+import os
+import sys
+
+# Asegurar rutas de importación hacia funciones y la raíz del repositorio
+DIR_ACTUAL = os.path.dirname(os.path.abspath(__file__))
+DIR_BASIC_TOOLS = os.path.abspath(os.path.join(DIR_ACTUAL, ".."))
+DIRECTORIO_RAIZ = os.path.abspath(os.path.join(DIR_BASIC_TOOLS, ".."))
+
+for ruta in (DIR_ACTUAL, DIR_BASIC_TOOLS, DIRECTORIO_RAIZ):
+    if ruta not in sys.path:
+        sys.path.insert(0, ruta)
+
 import cv2
-from funciones.motor_calibrator import CalibradorMotor
-from funciones.rgb_camera import get_rgb_frame
-from funciones.depth_camera import get_depth_frame
-from funciones.skeletal_capture import get_skeletal_data
-from funciones.hand_capture import get_hand_data
-from funciones.face_capture import get_face_data
+try:
+    from funciones.motor_calibrator import CalibradorMotor
+    from funciones.rgb_camera import get_rgb_frame
+    from funciones.depth_camera import get_depth_frame
+    from funciones.skeletal_capture import get_skeletal_data
+    from funciones.hand_capture import get_hand_data
+    from funciones.face_capture import get_face_data
+except ImportError:
+    from .funciones.motor_calibrator import CalibradorMotor
+    from .funciones.rgb_camera import get_rgb_frame
+    from .funciones.depth_camera import get_depth_frame
+    from .funciones.skeletal_capture import get_skeletal_data
+    from .funciones.hand_capture import get_hand_data
+    from .funciones.face_capture import get_face_data
+
 
 def main():
     print("========================================")

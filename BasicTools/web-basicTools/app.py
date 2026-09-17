@@ -11,11 +11,17 @@ from flask import Flask, render_template, Response, request, jsonify, send_from_
 
 # Configuración de rutas para imports robustos
 DIR_ACTUAL = os.path.dirname(os.path.abspath(__file__))
-DIRECTORIO_RAIZ = os.path.abspath(os.path.join(DIR_ACTUAL, ".."))
-DIR_PYTHON_TOOLS = os.path.join(DIRECTORIO_RAIZ, "python-basicTools")
-DIR_IMG = os.path.join(DIRECTORIO_RAIZ, "img")
+DIR_BASIC_TOOLS = os.path.abspath(os.path.join(DIR_ACTUAL, ".."))
+DIRECTORIO_RAIZ = os.path.abspath(os.path.join(DIR_BASIC_TOOLS, ".."))
+DIR_PYTHON_TOOLS = os.path.join(DIR_BASIC_TOOLS, "python-basicTools")
 
-for ruta in (DIR_ACTUAL, DIRECTORIO_RAIZ, DIR_PYTHON_TOOLS):
+# Carpeta de capturas: raíz del repositorio o BasicTools/img si existe
+if os.path.isdir(os.path.join(DIR_BASIC_TOOLS, "img")):
+    DIR_IMG = os.path.join(DIR_BASIC_TOOLS, "img")
+else:
+    DIR_IMG = os.path.join(DIRECTORIO_RAIZ, "img")
+
+for ruta in (DIR_ACTUAL, DIR_BASIC_TOOLS, DIRECTORIO_RAIZ, DIR_PYTHON_TOOLS):
     if ruta not in sys.path:
         sys.path.insert(0, ruta)
 

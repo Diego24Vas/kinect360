@@ -1,7 +1,10 @@
 import cv2
 import numpy as np
 import mediapipe as mp
-from funciones.rgb_camera import get_rgb_frame
+try:
+    from funciones.rgb_camera import get_rgb_frame
+except ImportError:
+    from .rgb_camera import get_rgb_frame
 
 mp_face_mesh = mp.solutions.face_mesh
 face_mesh = mp_face_mesh.FaceMesh(
